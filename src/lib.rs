@@ -4,19 +4,20 @@
 extern crate alloc;
 
 #[cfg(not(feature = "std"))]
-use sp_std::result::{Result, Result::*};
-
-#[cfg(not(feature = "std"))]
-use sp_std::collections::btree_map::BTreeMap;
+use alloc::collections::BTreeMap;
 #[cfg(feature = "std")]
 use std::collections::BTreeMap;
 
-pub mod best_path_calculator;
-pub mod types;
+mod best_path_calculator;
+mod types;
 use types::*;
 
-pub trait BestPathCalculator<C: Currency, A: Amount> {
-    fn calc_best_paths(
-        pairs_and_prices: &[(ProviderPair<C>, A)],
-    ) -> Result<BTreeMap<Pair<C>, PricePath<C, A>>, CalculatorError>;
+pub trait BestPathCalculator<C: Currency, A: Amount, P: Provider> {
+    fn calc_best_paths(pairs_and_prices: &[(ProviderPair<C, P>, A)]) -> Result<BTreeMap<Pair<C>, PricePath<C, A, P>>, CalculatorError>;
+}
+
+pub mod prelude {
+    pub use super::best_path_calculator::*;
+    pub use super::types::*;
+    pub use super::BestPathCalculator;
 }

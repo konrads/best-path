@@ -1,4 +1,4 @@
-# Longest/shortest path algorithm
+# Longest/shortest path algorithms
 
 [![test](https://github.com/konrads/best-path/workflows/test/badge.svg)](https://github.com/konrads/best-path/actions/workflows/test.yml)
 

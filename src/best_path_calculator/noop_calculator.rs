@@ -1,38 +1,15 @@
-// #[cfg(feature = "scale")]
-// use codec::{Decode, Encode};
-// #[cfg(feature = "scale")]
-// use scale_info::TypeInfo;
 #[cfg(not(feature = "std"))]
-use sp_std::vec;
-
+use alloc::vec;
 #[cfg(not(feature = "std"))]
-use sp_std::collections::btree_map::BTreeMap;
+use alloc::collections::BTreeMap;
 #[cfg(feature = "std")]
 use std::collections::BTreeMap;
-
 use crate::types::*;
-use crate::*;
+use crate::BestPathCalculator;
 
 pub struct NoBestPathCalculator {}
-impl<C: Currency, A: Amount> BestPathCalculator<C, A> for NoBestPathCalculator {
-    fn calc_best_paths(
-        pairs_and_prices: &[(ProviderPair<C>, A)],
-    ) -> Result<BTreeMap<Pair<C>, PricePath<C, A>>, CalculatorError> {
-        Ok(pairs_and_prices
-            .iter()
-            .cloned()
-            .map(|(pp, price)| {
-                (
-                    Pair {
-                        source: pp.pair.source,
-                        target: pp.pair.target,
-                    },
-                    PricePath {
-                        total_cost: price,
-                        steps: vec![],
-                    },
-                )
-            })
-            .collect())
-    }
+impl<C: Currency, A: Amount, P: Provider> BestPathCalculator<C, A, P> for NoBestPathCalculator {
+	fn calc_best_paths(pairs_and_prices: &[(ProviderPair<C, P>, A)]) -> Result<BTreeMap<Pair<C>, PricePath<C, A, P>>, CalculatorError> {
+		Ok(pairs_and_prices.iter().cloned().map(|(pp, price)| (Pair{source: pp.pair.source, target: pp.pair.target}, PricePath{total_cost: price, steps: vec![]})).collect())
+	}
 }
