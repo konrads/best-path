@@ -8,7 +8,7 @@ use alloc::{
 };
 use super::algo;
 use crate::types::*;
-use crate::BestPathCalculator;
+use crate::*;
 #[cfg(feature = "std")]
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -20,12 +20,12 @@ impl From<algo::PathCalculationError> for CalculatorError {
     }
 }
 
-const PRECISION: f64 = 1_000_000_000_000.0;
+pub (crate) const PRECISION: f64 = 1_000_000_000_000.0;
 
 pub struct FloydWarshallCalculator {}
 impl<C: Currency, A: Amount, P: Provider> BestPathCalculator<C, A, P> for FloydWarshallCalculator {
     /// Wraps Floyd-Warshall's algorithm that uses indexes from/into BestPathCalculator data structures
-	fn calc_best_paths(pairs_and_prices: &[(ProviderPair<C, P>, A)]) -> Result<BTreeMap<Pair<C>, PricePath<C, A, P>>, CalculatorError> {
+	fn calc_best_paths(pairs_and_prices: &[(ProviderPair<C, P>, A)]) -> Result<PricePathGraph<C, A, P>, CalculatorError> {
         // get unique and indexed currencies and providers
         let currencies = pairs_and_prices.iter().flat_map(|(ProviderPair { pair: Pair{source, target}, .. }, ..)| vec![source, target].into_iter())
             .collect::<BTreeSet<_>>().into_iter().collect::<Vec<_>>();

@@ -12,12 +12,14 @@ mod best_path_calculator;
 mod types;
 use types::*;
 
+pub type PricePathGraph<C, A, P> = BTreeMap<Pair<C>, PricePath<C, A, P>>;
+
 pub trait BestPathCalculator<C: Currency, A: Amount, P: Provider> {
-    fn calc_best_paths(pairs_and_prices: &[(ProviderPair<C, P>, A)]) -> Result<BTreeMap<Pair<C>, PricePath<C, A, P>>, CalculatorError>;
+    fn calc_best_paths(pairs_and_prices: &[(ProviderPair<C, P>, A)]) -> Result<PricePathGraph<C, A, P>, CalculatorError>;
 }
 
 pub mod prelude {
     pub use super::best_path_calculator::*;
     pub use super::types::*;
-    pub use super::BestPathCalculator;
+    pub use super::*;
 }
