@@ -1,0 +1,27 @@
+
+[package]
+name = "best-path"
+version = "0.1.0"
+edition = "2021"
+description = "Shortest/longest path algorithms, where edge weight accumulation can be a s sum or a product"
+homepage = "https://github.com/konrads/best-path"
+repository = "https://github.com/konrads/best-path"
+keywords = ["path", "floyd-warshall"]
+categories = ["path", "no-std", "scale"]
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+codec      = { version = ">=1.0.0", package = "parity-scale-codec", default-features = false, features = ["derive"], optional = true }
+scale-info = { version = ">=0.1.0", default-features = false, features = ["derive"], optional = true }
+sp-std     = { version = "4.0.0", default-features = false }
+num-traits = { version = "0.2.14", default-features = false, features = ["libm"] }
+
+[dev-dependencies]
+chrono = "0.4.19"
+quickcheck = "0.9.2"
+quickcheck_macros = "0.9.1"
+
+[features]
+default = ["std"]
+scale = ["codec", "scale-info"]
+std = ["codec/std", "scale-info/std"]
