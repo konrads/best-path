@@ -6,12 +6,14 @@ use alloc::{collections::{BTreeMap, BTreeSet}, vec, vec::Vec};
 use std::collections::{BTreeMap, BTreeSet};
 use core::cmp::Ordering;
 
+/// Internal algo representation of source & target vertices.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub (crate) struct Pair {
     pub (crate) source: usize,
     pub (crate) target: usize,
 }
 
+/// Internal algo representation of and edge comprising a pair, provider, cost.
 #[derive(Copy, Clone, Debug)]
 pub (crate) struct Edge {
     pub (crate) pair: Pair,

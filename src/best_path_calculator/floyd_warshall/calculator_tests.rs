@@ -41,17 +41,17 @@ fn test_real_life_graph() {
         ("ETH".to_owned(),  "BTC".to_owned(),  MOCK_PROVIDER, 0.06626),
         ("ETH".to_owned(),  "BNB".to_owned(),  MOCK_PROVIDER, 6.548),
         ("BNB".to_owned(),  "ETH".to_owned(),  MOCK_PROVIDER, 0.1527),
-    ].into_iter().map(|(source, target, provider, cost)| (ProviderPair{pair: Pair{source: source.as_str().as_bytes().to_vec(), target: target.as_str().as_bytes().to_vec()}, provider}, (cost * PRECISION) as u128)).collect::<Vec<_>>();
+    ].into_iter().map(|(source, target, provider, cost)| (ProviderPair{pair: Pair{source: source.as_str().as_bytes().to_vec(), target: target.as_str().as_bytes().to_vec()}, provider}, (cost * SCALE) as u128)).collect::<Vec<_>>();
     let res_out = FloydWarshallCalculator::calc_best_paths(&in_graph).unwrap().into_iter().collect::<Vec<(_, _)>>()
         .into_iter().map(|(p, pp)|(
             String::from_utf8(p.source).unwrap(),
             String::from_utf8(p.target).unwrap(),
-            pp.total_cost as f64 / PRECISION,
+            pp.total_cost as f64 / SCALE,
             pp.steps.into_iter().map(|PathStep{pair: Pair{source, target}, provider, cost}| (
                 String::from_utf8(source).unwrap(),
                 String::from_utf8(target).unwrap(),
                 provider,
-                cost as f64 / PRECISION,
+                cost as f64 / SCALE,
             )).collect::<Vec<(String, String, &str, f64)>>())
         ).collect::<Vec<(String, String, f64, Vec<(String, String, &str, f64)>)>>();
     assert_eq!(
@@ -83,4 +83,82 @@ fn test_real_life_graph() {
             ("USDT".to_owned(), "USDT".to_owned(), 1.0,              vec![])
         ],
         res_out);
+}
+
+/// Sample test, used as source for documentations.
+#[test]
+fn test_simple_example_graph() {
+    let in_graph = &[
+        (
+            ProviderPair { pair: Pair { source: "BNB".to_owned(), target: "USDT".to_owned() }, provider: "CRYPTO_COMPARE".to_owned() },
+            364_190_000_000_000_u128
+        ),
+        (
+            ProviderPair { pair: Pair { source: "USDT".to_owned(), target: "ETH".to_owned() }, provider: "COINGECKO".to_owned() },
+            2_745_000_000_u128
+        ),
+    ];
+    let res_out = FloydWarshallCalculator::calc_best_paths(in_graph);
+
+    // validate individual paths
+    let res_ref = res_out.as_ref().unwrap();
+    // multi-hop path path
+    assert_eq!(
+        &PricePath { total_cost: 999_701_550_000_u128, steps: vec![
+            PathStep { pair: Pair { source: "BNB".to_owned(), target: "USDT".to_owned() }, provider: "CRYPTO_COMPARE".to_owned(), cost: 364_190_000_000_000_u128 },
+            PathStep { pair: Pair { source: "USDT".to_owned(), target: "ETH".to_owned() }, provider: "COINGECKO".to_owned(), cost: 2_745_000_000_u128 }
+        ] },
+        res_ref.get(&Pair { source: "BNB".to_owned(), target: "ETH".to_owned() }).unwrap()
+    );
+    // 1 hop path, based on input ProviderPair
+    assert_eq!(
+        &PricePath { total_cost: 364_190_000_000_000_u128, steps: vec![
+            PathStep { pair: Pair { source: "BNB".to_owned(), target: "USDT".to_owned() }, provider: "CRYPTO_COMPARE".to_owned(), cost: 364_190_000_000_000_u128 }
+        ] },
+        res_ref.get(&Pair { source: "BNB".to_owned(), target: "USDT".to_owned() }).unwrap()
+    );
+    // path to self, note cost is still in scale 10^12
+    assert_eq!(
+        &PricePath { total_cost: 1_000_000_000_000_u128, steps: vec![] },
+        res_ref.get(&Pair { source: "BNB".to_owned(), target: "BNB".to_owned() }).unwrap()
+    );
+
+    // validate the whole lot
+    let as_nodes = res_out.unwrap().into_iter().collect::<Vec<(_, _)>>();
+    assert_eq!(
+        vec![
+            (
+                Pair { source: "BNB".to_owned(), target: "BNB".to_owned() },
+                PricePath { total_cost: 1_000_000_000_000_u128, steps: vec![] }
+            ),
+            (
+                Pair { source: "BNB".to_owned(), target: "ETH".to_owned() },
+                PricePath { total_cost: 999_701_550_000_u128, steps: vec![
+                    PathStep { pair: Pair { source: "BNB".to_owned(), target: "USDT".to_owned() }, provider: "CRYPTO_COMPARE".to_owned(), cost: 364_190_000_000_000_u128 },
+                    PathStep { pair: Pair { source: "USDT".to_owned(), target: "ETH".to_owned() }, provider: "COINGECKO".to_owned(), cost: 2_745_000_000_u128 }
+                ] }
+            ),
+            (
+                Pair { source: "BNB".to_owned(), target: "USDT".to_owned() },
+                PricePath { total_cost: 364_190_000_000_000_u128, steps: vec![
+                    PathStep { pair: Pair { source: "BNB".to_owned(), target: "USDT".to_owned() }, provider: "CRYPTO_COMPARE".to_owned(), cost: 364_190_000_000_000_u128 }
+                ] }
+            ),
+            (
+                Pair { source: "ETH".to_owned(), target: "ETH".to_owned() },
+                PricePath { total_cost: 1_000_000_000_000_u128, steps: vec![] }
+            ),
+            (
+                Pair { source: "USDT".to_owned(), target: "ETH".to_owned() },
+                PricePath { total_cost: 2_745_000_000_u128, steps: vec![
+                    PathStep { pair: Pair { source: "USDT".to_owned(), target: "ETH".to_owned() }, provider: "COINGECKO".to_owned(), cost: 2_745_000_000_u128 }
+                ] }
+            ),
+            (
+                Pair { source: "USDT".to_owned(), target: "USDT".to_owned() },
+                PricePath { total_cost: 1_000_000_000_000_u128, steps: vec![] }
+            ),
+        ],
+        as_nodes
+    );
 }
