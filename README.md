@@ -15,7 +15,7 @@ For longest paths, weights have been multiplied by `-1` and hence reused in shor
 _NOTE:_ Floyd-Warshall can detect negative path cycles (ie. infinite arbitrage opportunities), which cause the latest price update to be ignored.
 Potential TBD - remove offending edge to remove negative cycles...
 
-Sample usage of Floyd-Warshall calculator. All prices are in $10^12$, including self references, eg. cost of BNB -> BNB = $10^12$
+Sample usage of Floyd-Warshall calculator. All prices are in $10^{12}$, including self references, eg. cost of BNB -> BNB = $10^{12}$
 
 ```rust
 use best_path::prelude::*;

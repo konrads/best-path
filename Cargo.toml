@@ -6,8 +6,8 @@ edition = "2021"
 description = "Shortest/longest path algorithms, where edge weight accumulation via either a sum or a product"
 homepage = "https://github.com/konrads/best-path"
 repository = "https://github.com/konrads/best-path"
-keywords = ["path", "graph", "floyd-warshall"]
-categories = ["path", "graph", "no-std", "scale"]
+keywords = ["path", "graph", "floyd-warshall", "scale"]
+categories = ["algorithms", "no-std"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
