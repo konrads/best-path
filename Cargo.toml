@@ -1,7 +1,7 @@
 
 [package]
 name = "best-path"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Shortest/longest path algorithms, where edge weight accumulation via either a sum or a product"
 homepage = "https://github.com/konrads/best-path"

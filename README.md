@@ -10,7 +10,7 @@ Floyd-Warshall algorithm has the ability to calculate longest path (ie. most pro
 
 For multiplication based weights, we make use of the fact that product maximisation is equivalent to maximisation of log of weights, as per: $x*y = 2^{log2(x) + log2(y)}$.
 
-For longest paths, weights have been multiplied by `-1` and hence reused in shortest path algorithm.
+For longest paths, weights have been multiplied by $-1$ and hence reused in shortest path algorithm.
 
 _NOTE:_ Floyd-Warshall can detect negative path cycles (ie. infinite arbitrage opportunities), which cause the latest price update to be ignored.
 Potential TBD - remove offending edge to remove negative cycles...
@@ -55,3 +55,7 @@ assert_eq!(
     res_ref.get(&Pair { source: "BNB".to_owned(), target: "BNB".to_owned() }).unwrap()
 );
 ```
+
+### Utility within a pallet
+
+`Best-path` serves as a best trade finding mechanism for [best-path-pallet](https://github.com/konrads/pallet-best-path).
