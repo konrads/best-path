@@ -6,12 +6,12 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
 /// Currency representation, eg. "BTC".
-pub trait Currency: Ord + Clone + AsRef<[u8]> {}
-impl<T: Ord + Clone + AsRef<[u8]>> Currency for T {}
+pub trait Currency: Ord + Clone {}
+impl<T: Ord + Clone> Currency for T {}
 
 /// Numeric amount, must be representable by u128.
-pub trait Amount: Clone + Copy + TryInto<u128> + TryFrom<u128> {}
-impl<T: Clone + Copy + TryInto<u128> + TryFrom<u128>> Amount for T {}
+pub trait Amount: Copy + TryInto<u128> + TryFrom<u128> {}
+impl<T: Copy + TryInto<u128> + TryFrom<u128>> Amount for T {}
 
 /// Oracle providing currency pair pricing.
 pub trait Provider: Ord + Clone {}
