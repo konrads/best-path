@@ -57,13 +57,6 @@ impl PartialEq for Path {
 
 impl Eq for Path {}
 
-impl Path {
-    pub (crate) fn add(&mut self, edge: &Edge) {
-        self.total_cost += edge.cost;
-        self.edges.push(*edge);
-    }
-}
-
 #[derive(Debug)]
 pub enum PathCalculationError {
     NegativeCyclesError,
@@ -108,14 +101,10 @@ pub (crate) fn shortest_paths(edges: &[Edge]) -> Result<BTreeMap<Pair, Path>, Pa
 // Utilizes simple data structures with range of usize
 fn floyd_warshall_shortest_paths(edges: &[Edge]) -> Result<BTreeMap<Pair, Path>, PathCalculationError> {
     let mut vertices: BTreeSet<usize> = BTreeSet::new();
-    let mut edges_by_pair: BTreeMap<Pair, Edge> = BTreeMap::new();
-    let mut paths_by_pair: BTreeMap<Pair, Path> = BTreeMap::new();
 
     for e in edges.iter() {
         vertices.insert(e.pair.source);
         vertices.insert(e.pair.target);
-        edges_by_pair.insert(Pair{source: e.pair.source, target: e.pair.target}, *e);
-        paths_by_pair.entry(Pair{source: e.pair.source, target: e.pair.target}).or_insert(Path{total_cost: 0.0, edges: vec![]}).add(e);
     }
 
     let mut matrix: BTreeMap<Pair, Path> = BTreeMap::new();

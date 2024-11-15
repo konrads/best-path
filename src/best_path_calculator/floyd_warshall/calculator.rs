@@ -56,21 +56,17 @@ impl<C: Currency, A: Amount, P: Provider> BestPathCalculator<C, A, P> for FloydW
     /// ```
 	fn calc_best_paths(pairs_and_prices: &[(ProviderPair<C, P>, A)]) -> Result<PricePathGraph<C, A, P>, CalculatorError> {
         // get unique and indexed currencies and providers
-        let currencies = pairs_and_prices.iter().flat_map(|(ProviderPair { pair: Pair{source, target}, .. }, ..)| vec![source, target].into_iter())
-            .collect::<BTreeSet<_>>().into_iter().collect::<Vec<_>>();
-        let providers = pairs_and_prices.iter().map(|(ProviderPair { provider, .. }, ..)| provider)
-            .collect::<BTreeSet<_>>().into_iter().collect::<Vec<_>>();
-        let currencies_by_ind = currencies.iter().enumerate().map(|(i, &x)| (x, i)).collect::<BTreeMap<_, _>>();
-        let providers_by_ind = providers.iter().enumerate().map(|(i, &x)| (x, i)).collect::<BTreeMap<_, _>>();
+        let currency_indexer = PositionIndexer::new(pairs_and_prices.iter().flat_map(|(ProviderPair { pair: Pair{source, target}, .. }, ..)| vec![source, target].into_iter()));
+        let provider_indexer = PositionIndexer::new(pairs_and_prices.iter().map(|(ProviderPair { provider, .. }, ..)| provider));
 
         // construct the graph for Floyd-Warshall lib
         let mut graph = Vec::new();
-        for &c in currencies.iter() {
+        for c in currency_indexer.iter() {
             for (pp, cost) in pairs_and_prices {
                 if c == &pp.pair.source {
                     graph.push(algo::Edge {
-                        pair:        algo::Pair{source: currencies_by_ind[&pp.pair.source], target: currencies_by_ind[&pp.pair.target]},
-                        provider:    providers_by_ind[&pp.provider],
+                        pair:        algo::Pair{source: currency_indexer.by_val(&pp.pair.source), target: currency_indexer.by_val(&pp.pair.target)},
+                        provider:    provider_indexer.by_val(&pp.provider),
                         cost:        TryInto::<u128>::try_into(*cost).map_err(|_| CalculatorError::ConversionError)? as f64 / SCALE
                     });
                 }
@@ -80,13 +76,40 @@ impl<C: Currency, A: Amount, P: Provider> BestPathCalculator<C, A, P> for FloydW
         // run Floyd-Warshall for all combinations of currencies in the graph
         let res = algo::longest_paths_mult(&graph)?;
         let res_map = res.into_iter().map(|(algo::Pair{source, target}, algo::Path{total_cost, edges})| {
-            let pair = Pair{source: currencies[source].clone(), target: currencies[target].clone()};
+            let pair = Pair{source: currency_indexer.by_ind(source), target: currency_indexer.by_ind(target)};
             let total_cost_u128 = (total_cost * SCALE) as u128;
             let path = PricePath{ total_cost: total_cost_u128.try_into().ok().unwrap(), steps: edges.into_iter().map(|algo::Edge{pair: algo::Pair{source, target, ..}, provider, cost}|
-                PathStep{pair: Pair{source: currencies[source].clone(), target: currencies[target].clone()}, provider: providers[provider].clone(), cost: ((cost * SCALE) as u128).try_into().ok().unwrap()}).collect()
+                PathStep{pair: Pair{source: currency_indexer.by_ind(source), target: currency_indexer.by_ind(target)}, provider: provider_indexer.by_ind(provider), cost: ((cost * SCALE) as u128).try_into().ok().unwrap()}).collect()
             };
             (pair, path)
         }).collect::<BTreeMap<_, _>>();
         Ok(res_map)
 	}
+}
+
+
+/// Utility for creating an index of values, providing lookup by value or position in the original iterator. 
+struct PositionIndexer<'a, T> {
+    map: BTreeMap<&'a T, usize>,
+    vec: Vec<&'a T>,
+}
+
+impl<'a, T: Ord + Clone> PositionIndexer<'a, T> {
+    fn new(set: impl Iterator<Item = &'a T>) -> Self {
+        let vec = set.collect::<BTreeSet<_>>().into_iter().collect::<Vec<_>>();
+        let map = vec.iter().enumerate().map(|(i, x)| (*x, i)).collect::<BTreeMap<_, _>>();
+        Self { map, vec }
+    }
+
+    fn iter(&'a self) -> impl Iterator<Item = &'a T> {
+        self.vec.iter().copied()
+    }
+
+    fn by_val(&self, val: &'a T) -> usize {
+        *self.map.get(val).unwrap()
+    }
+
+    fn by_ind(&self, ind: usize) -> T {
+        self.vec.get(ind).map(|&x| x.clone()).unwrap()
+    }
 }

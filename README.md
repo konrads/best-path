@@ -1,6 +1,6 @@
 # Longest/shortest path algorithms
 
-[![test](https://github.com/konrads/best-path/workflows/test/badge.svg)](https://github.com/konrads/best-path/actions/workflows/test.yml)
+[![build](../../workflows/build/badge.svg)](../../actions/workflows/test.yml)
 
 Algorithms to facilitate longest (and shortest) path algorithms. Path cost is calculated by either summing or multiplying edge weights.
 
@@ -12,8 +12,7 @@ For multiplication based weights, we make use of the fact that product maximisat
 
 For longest paths, weights have been multiplied by $-1$ and hence reused in shortest path algorithm.
 
-_NOTE:_ Floyd-Warshall can detect negative path cycles (ie. infinite arbitrage opportunities), which cause the latest price update to be ignored.
-Potential TBD - remove offending edge to remove negative cycles...
+_NOTE:_ Floyd-Warshall can detect negative path cycles (ie. infinite arbitrage opportunities), which cause the latest price update to be ignored. Potential TBD - remove offending edge to remove negative cycles...
 
 Sample usage of Floyd-Warshall calculator. All prices are in $10^{12}$, including self references, eg. cost of BNB -> BNB = $10^{12}$
 
