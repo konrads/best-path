@@ -1,6 +1,6 @@
 # Longest/shortest path algorithms
 
-[![build](../../workflows/build/badge.svg)](../../actions/workflows/test.yml)
+[![build](../../workflows/build/badge.svg)](../../actions/workflows/build.yml)
 
 Algorithms to facilitate longest (and shortest) path algorithms. Path cost is calculated by either summing or multiplying edge weights.
 
