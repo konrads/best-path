@@ -1,7 +1,7 @@
 use super::algo::*;
 use core::cmp::Ordering;
 #[cfg(not(feature = "std"))]
-use alloc::{vec, vec::Vec};
+use alloc::vec;
 
 /// Simple chain: 0→1→2, verify direct and multi-hop paths from source 0.
 #[test]

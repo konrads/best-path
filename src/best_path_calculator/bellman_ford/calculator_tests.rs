@@ -1,6 +1,6 @@
 #[cfg(not(feature = "std"))]
 #[allow(unused_imports)]
-use alloc::{string::String, vec, vec::Vec};
+use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
 use crate::types::*;
 use crate::{AllPairsBestPathCalculator, SingleSourceBestPathCalculator};
 use super::calculator::{BellmanFordCalculator, SCALE};
