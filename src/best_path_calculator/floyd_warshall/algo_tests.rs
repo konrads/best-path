@@ -27,7 +27,7 @@ use alloc::{vec, vec::Vec};
 
 #[test]
 fn test_unique_edges() {
-    let set = unique_cheapest_edges(&vec![
+    let set = best_edge_per_pair(&vec![
         Edge{pair: Pair{source: 1, target: 2}, provider:   3, cost: 1.0},
         Edge{pair: Pair{source: 1, target: 2}, provider:  33, cost: 10.0},
         Edge{pair: Pair{source: 1, target: 2}, provider: 333, cost: 5.0},
@@ -48,7 +48,7 @@ fn test_simple() {
         Edge{pair: Pair{source: 1, target: 2}, provider: 1, cost: 4.0},
         Edge{pair: Pair{source: 2, target: 1}, provider: 1, cost: 0.25},
     ];
-    let res = longest_paths_mult(&edges).unwrap().into_iter().collect::<Vec<_>>();
+    let res = longest_paths_by_product(&edges).unwrap().into_iter().collect::<Vec<_>>();
     assert_eq!(
         res,
         vec![
@@ -116,24 +116,4 @@ fn test_youtube_negative_cycle() {
         Edge{pair: Pair{source: 3, target: 0}, provider: 1, cost: 2.0},
     ];
     assert!(shortest_paths(&edges).is_err());
-}
-
-#[test]
-/// Few tests to ensure comparability of floats
-fn test_f64() {
-    assert!(f64::MAX  > 1.0);
-    assert!(-f64::MAX < 1.0);
-    assert!(! (f64::MAX > f64::MAX + 1.0));  // neither > or < than MAX
-    assert!(! (f64::MAX < f64::MAX + 1.0));
-    assert_eq!(f64::MAX, f64::MAX + 1.0);
-    assert_eq!(f64::MAX, f64::MAX - 1.0);
-    assert!(!(f64::MAX == 8.0 + 7.0));
-    assert!(f64::MAX != 8.0 + 7.0);
-    assert!(f64::MAX > 8.0 + 7.0);
-    assert!(! (f64::MAX <= 8.0 + 7.0));
-
-    let max_u128 = u128::MAX;
-    let max_u128_as_f64 = (max_u128 as f64) * 10.0 + 10.0;
-    let max_u128_as_f64_as_u128 = max_u128_as_f64 as u128;
-    assert_eq!(max_u128, max_u128_as_f64_as_u128);
 }

@@ -1,19 +1,32 @@
 
 [package]
 name = "best-path"
-version = "0.1.1"
+version = "2.0.0"
 edition = "2021"
 description = "Shortest/longest path algorithms, where edge weight accumulation via either a sum or a product"
 homepage = "https://github.com/konrads/best-path"
 repository = "https://github.com/konrads/best-path"
-keywords = ["path", "graph", "floyd-warshall", "scale"]
+keywords = ["path", "graph", "floyd-warshall", "bellman-ford"]
 categories = ["algorithms", "no-std"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-codec      = { version = ">=1.0.0", package = "parity-scale-codec", default-features = false, features = ["derive"], optional = true }
-scale-info = { version = ">=0.1.0", default-features = false, features = ["derive"], optional = true }
-num-traits = { version = ">=0.2.1", default-features = false, features = ["libm"] }
+codec = { version = ">=1.0.0", package = "parity-scale-codec", default-features = false, features = [
+    "derive",
+], optional = true }
+scale-info = { version = ">=0.1.0", default-features = false, features = [
+    "derive",
+], optional = true }
+num-traits = { version = ">=0.2.1", default-features = false, features = [
+    "libm",
+] }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "benchmarks"
+harness = false
 
 [features]
 default = ["std"]

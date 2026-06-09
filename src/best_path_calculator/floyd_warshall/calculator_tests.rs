@@ -6,7 +6,7 @@ use alloc::{
     vec, vec::Vec,
 };
 use crate::types::*;
-use crate::BestPathCalculator;
+use crate::AllPairsBestPathCalculator;
 use super::calculator::*;
 
 const MOCK_PROVIDER: &str = "MOCK_PROVIDER";

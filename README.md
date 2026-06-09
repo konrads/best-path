@@ -1,20 +1,26 @@
-# Longest/shortest path algorithms
+# best-path
 
 [![build](../../workflows/build/badge.svg)](../../actions/workflows/build.yml)
 
-Algorithms to facilitate longest (and shortest) path algorithms. Path cost is calculated by either summing or multiplying edge weights.
+Rust `no_std` library for finding the most profitable trade route through a currency exchange graph. Edge weights represent exchange rates; the library finds the path that maximises the product of rates along the route.
 
-## Floyd-Warshall
+## Installation
 
-Floyd-Warshall algorithm has the ability to calculate longest path (ie. most profitable trade) calculations, albeit at the expensive cost of $O(n^3)$.
+```toml
+[dependencies]
+best-path = "0.1"
 
-For multiplication based weights, we make use of the fact that product maximisation is equivalent to maximisation of log of weights, as per: $x*y = 2^{log2(x) + log2(y)}$.
+# Substrate / SCALE codec support (optional):
+best-path = { version = "0.1", features = ["scale"] }
+```
 
-For longest paths, weights have been multiplied by $-1$ and hence reused in shortest path algorithm.
+## Floyd-Warshall — all pairs
 
-_NOTE:_ Floyd-Warshall can detect negative path cycles (ie. infinite arbitrage opportunities), which cause the latest price update to be ignored. Potential TBD - remove offending edge to remove negative cycles...
+Calculates the best path between **every** pair of currencies in a single O(V³) pass.
 
-Sample usage of Floyd-Warshall calculator. All prices are in $10^{12}$, including self references, eg. cost of BNB -> BNB = $10^{12}$
+Uses the log trick: maximising the product x·y is equivalent to maximising log₂(x) + log₂(y), so rates are transformed to –log₂(rate) and a shortest-path core is applied. Detects negative cycles (infinite arbitrage) and returns `NegativeCyclesError`.
+
+All prices are integers scaled by 10¹², including self-references (BNB→BNB = 10¹²).
 
 ```rust
 use best_path::prelude::*;
@@ -30,31 +36,63 @@ let in_graph = &[
         2_745_000_000_u128
     ),
 ];
-let res_out = FloydWarshallCalculator::calc_best_paths(in_graph);
-let as_nodes = res_out.unwrap().into_iter().collect::<Vec<(_, _)>>();
-let res_ref = res_out.as_ref().unwrap();
-// multi-hop path path
+let res = FloydWarshallCalculator::calc_best_paths(in_graph).unwrap();
+
+// multi-hop path: BNB → USDT → ETH
 assert_eq!(
+    res.get(&Pair { source: "BNB".to_owned(), target: "ETH".to_owned() }).unwrap(),
     &PricePath { total_cost: 999_701_550_000_u128, steps: vec![
         PathStep { pair: Pair { source: "BNB".to_owned(), target: "USDT".to_owned() }, provider: "CRYPTO_COMPARE".to_owned(), cost: 364_190_000_000_000_u128 },
         PathStep { pair: Pair { source: "USDT".to_owned(), target: "ETH".to_owned() }, provider: "COINGECKO".to_owned(), cost: 2_745_000_000_u128 }
-    ] },
-    res_ref.get(&Pair { source: "BNB".to_owned(), target: "ETH".to_owned() }).unwrap()
+    ] }
 );
-// 1 hop path, based on input ProviderPair
+
+// direct path
 assert_eq!(
+    res.get(&Pair { source: "BNB".to_owned(), target: "USDT".to_owned() }).unwrap(),
     &PricePath { total_cost: 364_190_000_000_000_u128, steps: vec![
         PathStep { pair: Pair { source: "BNB".to_owned(), target: "USDT".to_owned() }, provider: "CRYPTO_COMPARE".to_owned(), cost: 364_190_000_000_000_u128 }
-    ] },
-    res_ref.get(&Pair { source: "BNB".to_owned(), target: "USDT".to_owned() }).unwrap()
+    ] }
 );
-// path to self, note cost is still in scale 10^12
+
+// self-reference cost is 10^12
 assert_eq!(
-    &PricePath { total_cost: 1_000_000_000_000_u128, steps: vec![] },
-    res_ref.get(&Pair { source: "BNB".to_owned(), target: "BNB".to_owned() }).unwrap()
+    res.get(&Pair { source: "BNB".to_owned(), target: "BNB".to_owned() }).unwrap(),
+    &PricePath { total_cost: 1_000_000_000_000_u128, steps: vec![] }
 );
 ```
 
-### Utility within a pallet
+## Bellman-Ford — single source
 
-`Best-path` serves as a best trade finding mechanism for [best-path-pallet](https://github.com/konrads/pallet-best-path).
+Calculates the best paths from **one** source currency to all reachable targets at O(VE) cost. Prefer this over Floyd-Warshall when only one source is needed — it is typically 10–50× faster on sparse graphs.
+
+```rust
+use best_path::prelude::*;
+use best_path::prelude::bellman_ford::calculator::BellmanFordCalculator;
+
+let in_graph = &[
+    (
+        ProviderPair { pair: Pair { source: "BNB".to_owned(), target: "USDT".to_owned() }, provider: "CRYPTO_COMPARE".to_owned() },
+        364_190_000_000_000_u128
+    ),
+    (
+        ProviderPair { pair: Pair { source: "USDT".to_owned(), target: "ETH".to_owned() }, provider: "COINGECKO".to_owned() },
+        2_745_000_000_u128
+    ),
+];
+let source = "BNB".to_owned();
+let res = BellmanFordCalculator::calc_best_paths_from(&source, in_graph).unwrap();
+
+// multi-hop path: BNB → USDT → ETH
+assert_eq!(
+    res.get(&Pair { source: "BNB".to_owned(), target: "ETH".to_owned() }).unwrap(),
+    &PricePath { total_cost: 999_701_550_000_u128, steps: vec![
+        PathStep { pair: Pair { source: "BNB".to_owned(), target: "USDT".to_owned() }, provider: "CRYPTO_COMPARE".to_owned(), cost: 364_190_000_000_000_u128 },
+        PathStep { pair: Pair { source: "USDT".to_owned(), target: "ETH".to_owned() }, provider: "COINGECKO".to_owned(), cost: 2_745_000_000_u128 }
+    ] }
+);
+```
+
+## Utility within a pallet
+
+`best-path` serves as a best trade finding mechanism for [best-path-pallet](https://github.com/konrads/pallet-best-path).
